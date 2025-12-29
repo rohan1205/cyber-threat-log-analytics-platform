@@ -1,17 +1,18 @@
 from fastapi import FastAPI
-from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 from database.mongodb import get_logs_collection
 from ai.threat_scoring import score_threat
-from analytics.security_analytics import (
-    severity_count,
-    top_events,
-    recent_high_threats
-)
 
-app = FastAPI(title="Cyber Threat Log Analytics Platform")
+from auth.auth_routes import router as auth_router
+from analytics.analytics_routes import router as analytics_router
 
-# ---------------- BASIC ----------------
+app = FastAPI(
+    title="Cyber Threat Log Analytics Platform",
+    version="1.0.0"
+) 
+
+
 
 @app.get("/")
 def root():
