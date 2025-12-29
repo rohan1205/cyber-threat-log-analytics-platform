@@ -1,8 +1,10 @@
 from fastapi import FastAPI
-from database.mongodb import get_logs_collection
 from datetime import datetime
 
-app = FastAPI()
+from database.mongodb import get_logs_collection
+from ai.threat_scoring import score_threat
+
+app = FastAPI(title="Cyber Threat Log Analytics Platform")
 
 @app.get("/")
 def root():
@@ -11,9 +13,20 @@ def root():
 @app.post("/logs")
 def create_log(log: dict):
     collection = get_logs_collection()
+
+    analysis = score_threat(log)
+
+    log["severity"] = analysis["severity"]
+    log["score"] = analysis["score"]
+    log["reasons"] = analysis["reasons"]
     log["timestamp"] = datetime.utcnow()
+
     collection.insert_one(log)
-    return {"message": "Log saved successfully"}
+
+    return {
+        "message": "Log saved & threat scored",
+        "analysis": analysis
+    }
 
 @app.get("/logs")
 def get_logs():

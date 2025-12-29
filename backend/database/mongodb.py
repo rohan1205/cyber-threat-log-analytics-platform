@@ -1,6 +1,10 @@
+import os
 from pymongo import MongoClient
+from dotenv import load_dotenv
 
-MONGO_URI = "mongodb+srv://rohanydv1305:rohanydv1305@cluster0.2xfh4vd.mongodb.net/?appName=Cluster0"
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI")
 
 client = MongoClient(MONGO_URI)
 db = client["cyber_logs"]
