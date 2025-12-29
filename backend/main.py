@@ -1,35 +1,50 @@
 from fastapi import FastAPI
-from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
+# Database
 from database.mongodb import get_logs_collection
+
+# AI
 from ai.threat_scoring import score_threat
-from analytics.security_analytics import (
-    severity_count,
-    top_events,
-    recent_high_threats
+
+# Routers
+from auth.auth_routes import router as auth_router
+from analytics.analytics_routes import router as analytics_router
+
+app = FastAPI(
+    title="Cyber Threat Log Analytics Platform",
+    version="1.0.0"
 )
 
-app = FastAPI(title="Cyber Threat Log Analytics Platform")
+# -------------------- CORS --------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # change later for production frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# ---------------- BASIC ----------------
+# -------------------- ROUTERS --------------------
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
 
+# -------------------- ROOT --------------------
 @app.get("/")
 def root():
     return {"status": "Backend running successfully"}
 
-# ---------------- LOG INGESTION ----------------
-
+# -------------------- LOG APIs --------------------
 @app.post("/logs")
 def create_log(log: dict):
+    """
+    Ingest a log, score threat using AI, store in MongoDB
+    """
     collection = get_logs_collection()
 
     analysis = score_threat(log)
 
-    log["severity"] = analysis["severity"]
-    log["score"] = analysis["score"]
-    log["reasons"] = analysis["reasons"]
-    log["timestamp"] = datetime.utcnow()
-
+    log["analysis"] = analysis
     collection.insert_one(log)
 
     return {
@@ -37,21 +52,13 @@ def create_log(log: dict):
         "analysis": analysis
     }
 
+
 @app.get("/logs")
-def get_logs():
+def get_logs(limit: int = 50):
+    """
+    Fetch recent logs
+    """
     collection = get_logs_collection()
-    return list(collection.find({}, {"_id": 0}))
 
-# ---------------- ANALYTICS (SIEM STYLE) ----------------
-
-@app.get("/analytics/severity-count")
-def analytics_severity_count():
-    return severity_count()
-
-@app.get("/analytics/top-events")
-def analytics_top_events(limit: int = 5):
-    return top_events(limit)
-
-@app.get("/analytics/recent-high-threats")
-def analytics_recent_high_threats(limit: int = 5):
-    return recent_high_threats(limit)
+    logs = list(collection.find({}, {"_id": 0}).limit(limit))
+    return logs
