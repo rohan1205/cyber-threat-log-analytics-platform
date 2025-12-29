@@ -16,11 +16,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# -------------------- CORS --------------------
+# -------------------- CORS (FIXED) --------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # change later for production frontend
-    allow_credentials=True,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "http://localhost:8080",
+        "http://localhost",
+        "https://cyber-threat-log-analytics-platform.onrender.com",
+    ],
+    allow_credentials=False,  # ✅ IMPORTANT FIX
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -37,28 +43,13 @@ def root():
 # -------------------- LOG APIs --------------------
 @app.post("/logs")
 def create_log(log: dict):
-    """
-    Ingest a log, score threat using AI, store in MongoDB
-    """
     collection = get_logs_collection()
-
     analysis = score_threat(log)
-
     log["analysis"] = analysis
     collection.insert_one(log)
-
-    return {
-        "message": "Log saved & threat scored",
-        "analysis": analysis
-    }
-
+    return {"message": "Log saved & threat scored", "analysis": analysis}
 
 @app.get("/logs")
 def get_logs(limit: int = 50):
-    """
-    Fetch recent logs
-    """
     collection = get_logs_collection()
-
-    logs = list(collection.find({}, {"_id": 0}).limit(limit))
-    return logs
+    return list(collection.find({}, {"_id": 0}).limit(limit))
