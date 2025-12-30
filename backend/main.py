@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends  # Add Depends
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
@@ -7,6 +7,8 @@ from ai.threat_scoring import score_threat
 
 from auth.auth_routes import router as auth_router
 from analytics.analytics_routes import router as analytics_router
+# IMPORT the dependency that extracts the user from the token
+from auth.auth_handler import get_current_user 
 
 app = FastAPI(
     title="Cyber Threat Log Analytics Platform",
@@ -31,13 +33,14 @@ app.include_router(analytics_router, prefix="/analytics")
 def root():
     return {"status": "Backend running successfully"}
 
-# ---------- LOG INGESTION ----------
+# ---------- LOG INGESTION (NOW PRIVATE) ----------
 @app.post("/logs")
-def create_log(log: dict):
+def create_log(log: dict, user_email: str = Depends(get_current_user)): # Added Auth
     collection = get_logs_collection()
 
     analysis = score_threat(log)
 
+    log["owner"] = user_email  # <--- CRITICAL: Tie this log to the user
     log["severity"] = analysis["severity"]
     log["score"] = analysis["score"]
     log["reasons"] = analysis["reasons"]
@@ -51,6 +54,7 @@ def create_log(log: dict):
     }
 
 @app.get("/logs")
-def get_logs():
+def get_logs(user_email: str = Depends(get_current_user)): # Added Auth
     collection = get_logs_collection()
-    return list(collection.find({}, {"_id": 0}))
+    # <--- CRITICAL: Only find logs belonging to THIS user
+    return list(collection.find({"owner": user_email}, {"_id": 0}))
