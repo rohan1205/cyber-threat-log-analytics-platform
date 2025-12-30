@@ -4,7 +4,7 @@ from auth.auth_utils import hash_password, verify_password, create_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# temporary in-memory user store
+# TEMP in-memory storage (OK for now)
 users_db = {}
 
 @router.post("/register")
@@ -16,6 +16,7 @@ def register(user: UserRegister):
         "email": user.email,
         "password": hash_password(user.password)
     }
+
     return {"message": "User registered successfully"}
 
 @router.post("/login")
