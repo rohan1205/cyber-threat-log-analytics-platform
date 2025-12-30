@@ -14,8 +14,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # =====================
 # PASSWORD FUNCTIONS
 # =====================
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+def hash_password(password: str):
+    return pwd_context.hash(password[:72])
+
 
 def verify_password(password: str, hashed: str) -> bool:
     return pwd_context.verify(password, hashed)
