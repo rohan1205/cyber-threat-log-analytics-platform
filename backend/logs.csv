@@ -1,0 +1,6 @@
+timestamp,source_ip,destination_port,protocol,event
+2023-10-01 10:00:01,192.168.1.50,80,6,Standard Web Traffic
+2023-10-01 10:00:05,10.0.0.15,443,6,Secure Connection
+2023-10-01 10:01:12,172.16.0.5,22,6,SSH Login Attempt
+2023-10-01 10:02:45,192.168.1.100,80,6,Potential DDoS Spike
+2023-10-01 10:05:20,192.168.1.50,445,6,SMB Scanning
