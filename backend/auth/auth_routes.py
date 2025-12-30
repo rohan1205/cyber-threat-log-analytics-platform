@@ -4,7 +4,7 @@ from auth.auth_utils import hash_password, verify_password, create_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# temporary user storage (later we move to MongoDB)
+# temporary in-memory user store
 users_db = {}
 
 @router.post("/register")
@@ -29,4 +29,7 @@ def login(user: UserLogin):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_token(user.email)
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }

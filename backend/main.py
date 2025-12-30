@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
 from database.mongodb import get_logs_collection
 from ai.threat_scoring import score_threat
@@ -10,13 +11,25 @@ from analytics.analytics_routes import router as analytics_router
 app = FastAPI(
     title="Cyber Threat Log Analytics Platform",
     version="1.0.0"
-) 
+)
 
+# ✅ CORS (REQUIRED for Flutter Web)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # later restrict
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-
+# ✅ Health check
 @app.get("/")
 def root():
     return {"status": "Backend running successfully"}
+
+# ✅ REGISTER ROUTERS (NO PREFIX HERE)
+app.include_router(auth_router)
+app.include_router(analytics_router)
 
 # ---------------- LOG INGESTION ----------------
 
@@ -42,17 +55,3 @@ def create_log(log: dict):
 def get_logs():
     collection = get_logs_collection()
     return list(collection.find({}, {"_id": 0}))
-
-# ---------------- ANALYTICS (SIEM STYLE) ----------------
-
-@app.get("/analytics/severity-count")
-def analytics_severity_count():
-    return severity_count()
-
-@app.get("/analytics/top-events")
-def analytics_top_events(limit: int = 5):
-    return top_events(limit)
-
-@app.get("/analytics/recent-high-threats")
-def analytics_recent_high_threats(limit: int = 5):
-    return recent_high_threats(limit)
