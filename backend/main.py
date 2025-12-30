@@ -10,7 +10,8 @@ from analytics.analytics_routes import router as analytics_router
 
 app = FastAPI(
     title="Cyber Threat Log Analytics Platform",
-    version="1.0.0"
+    version="1.0.0",
+    debug=True
 )
 
 # ✅ CORS (REQUIRED for Flutter Web)
